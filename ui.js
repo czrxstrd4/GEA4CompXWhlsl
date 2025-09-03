@@ -78,7 +78,6 @@ export function renderDashboard() {
         const items = projectsForThisBucket.filter(p => p.targetYear === year).sort((a, b) => a.order - b.order);
 
         items.forEach(p => {
-            // Simplified display logic: always show ranking
             const displayValue = p.compRanking;
 
             let statusClass = '';
@@ -269,7 +268,6 @@ function renderLegend() {
     `;
 }
 
-// --- Filters & Display Options ---
 export function populateFilters() {
     const gridSet = new Set(state.projects.map(p => p.grid).filter(Boolean));
     const subtypeSet = new Set(state.projects.map(p => p.subtype).filter(Boolean));
@@ -405,7 +403,6 @@ function updateCompanyButtonText() {
     else btnText.textContent = `${selected.length} Companies`;
 }
 
-// --- User Interactions ---
 export function initializeInteractions() {
     initializeDragAndDrop();
     initializeCardDropdowns();

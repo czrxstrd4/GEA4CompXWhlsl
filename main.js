@@ -40,8 +40,6 @@ function setupEventListeners() {
         handleHighlightToggle();
     });
 
-    // --- ENHANCED SCENARIO EVENT LISTENERS ---
-
     const saveScenarioModalEl = document.getElementById('saveScenarioModal');
     const saveScenarioModal = bootstrap.Modal.getOrCreateInstance(saveScenarioModalEl);
     const scenarioNameInput = document.getElementById('scenarioNameInput');
