@@ -1,7 +1,7 @@
-import { state, setProjects, setCapacityRequirements, setYears, setBuckets, toggleAboitizHighlight, cycleDisplayState, setCurrentScenarioName } from './state.js';
+import { state, setProjects, setCapacityRequirements, setYears, setBuckets, toggleAboitizHighlight, setCurrentScenarioName } from './state.js';
 import { fetchProjects, fetchCapacityRequirements } from './api.js';
 import { populateScenarioList, loadScenario, saveScenario, deleteScenario } from './scenarioManager.js';
-import { renderDashboard, populateFilters, updateDisplayOptions, handleHighlightToggle, initializeInteractions, updateProjectCapacity } from './ui.js';
+import { renderDashboard, populateFilters, handleHighlightToggle, initializeInteractions, updateProjectCapacity } from './ui.js';
 
 async function initializeApp() {
     const loadingEl = document.getElementById("dashboardGrid");
@@ -24,8 +24,6 @@ async function initializeApp() {
         setBuckets(activeBuckets);
 
         populateFilters();
-        const initialSubtypes = [...document.querySelectorAll('#subtypeFilter .multiselect-option.active')].map(opt => opt.dataset.value);
-        updateDisplayOptions(initialSubtypes);
         renderDashboard();
         populateScenarioList();
         initializeInteractions();
@@ -40,11 +38,6 @@ function setupEventListeners() {
     document.getElementById('highlightAboitizBtn').addEventListener('click', () => {
         toggleAboitizHighlight();
         handleHighlightToggle();
-    });
-
-    document.getElementById('displayToggleBtn').addEventListener('click', () => {
-        cycleDisplayState();
-        renderDashboard();
     });
 
     // --- ENHANCED SCENARIO EVENT LISTENERS ---

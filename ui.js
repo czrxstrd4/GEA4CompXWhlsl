@@ -1,12 +1,8 @@
-import { state, setPlaceholder, setCurrentDropzone, setCurrentDisplay, cycleDisplayState } from './state.js';
+import { state, setPlaceholder, setCurrentDropzone } from './state.js';
 
 // --- Core Rendering & Processing ---
 
 export function renderDashboard() {
-    const displayToggleBtn = document.getElementById('displayToggleBtn');
-    const currentState = state.currentAvailableDisplays[state.currentDisplayStateIndex];
-    displayToggleBtn.textContent = `Display: ${currentState.charAt(0).toUpperCase() + currentState.slice(1)}`;
-
     const activeGridOption = document.querySelector('#gridFilter .multiselect-option.active');
     const gridFilter = activeGridOption ? activeGridOption.dataset.value : "";
     
@@ -82,18 +78,8 @@ export function renderDashboard() {
         const items = projectsForThisBucket.filter(p => p.targetYear === year).sort((a, b) => a.order - b.order);
 
         items.forEach(p => {
-            let displayValue = '';
-            if (['Onshore', 'Floating', 'Hybrid'].includes(p.subtype)) {
-                 displayValue = p.compRanking;
-            } else {
-                if (currentState === 'tariff') {
-                    displayValue = !isNaN(p.tariff) && p.tariff > 0 ? `₱${p.tariff.toFixed(3)}` : 'N/A';
-                } else if (currentState === 'ranking') {
-                    displayValue = p.compRanking;
-                } else { // competitiveness
-                    displayValue = p.competitiveness;
-                }
-            }
+            // Simplified display logic: always show ranking
+            const displayValue = p.compRanking;
 
             let statusClass = '';
             if (p.bidderStatus === 'accepted') statusClass = 'status-bidder';
@@ -128,7 +114,7 @@ export function renderDashboard() {
     
     container.appendChild(bucketGroupEl);
 
-    renderLegend(); // Render the new legend
+    renderLegend();
     renderSummaryTotals(filteredProjects);
     applyHighlightStyles();
 }
@@ -258,7 +244,6 @@ function renderSummaryTotals(filteredProjects) {
     container.appendChild(summaryRow);
 }
 
-// --- NEW LEGEND FUNCTION ---
 function renderLegend() {
     const container = document.getElementById('legend-grid');
     container.innerHTML = `
@@ -391,12 +376,6 @@ function setupDropdown(container, updateFn, isSingleSelect) {
             menu.querySelectorAll('.multiselect-option').forEach(opt => opt.classList.remove('active'));
             targetOption.classList.add('active');
             updateFn();
-            
-            if (container.id === 'subtypeFilter') {
-                const selectedSubtypes = targetOption.dataset.value ? [targetOption.dataset.value] : [];
-                updateDisplayOptions(selectedSubtypes);
-            }
-
             renderDashboard(); 
             menu.classList.remove('show');
         } else {
@@ -424,22 +403,6 @@ function updateCompanyButtonText() {
     if (selected.length === 0) btnText.textContent = 'All Companies';
     else if (selected.length === 1) btnText.textContent = selected[0];
     else btnText.textContent = `${selected.length} Companies`;
-}
-
-export function updateDisplayOptions(selectedSubtypes) {
-    const displayBtn = document.getElementById('displayToggleBtn');
-    const subtypesWithRankingDisplay = ['Onshore', 'Floating', 'Hybrid'];
-
-    if (selectedSubtypes.some(st => subtypesWithRankingDisplay.includes(st))) {
-        displayBtn.style.display = 'none';
-    } else {
-        displayBtn.style.display = 'inline-block';
-        const newDefault = 'tariff';
-        let newIndex = state.allDisplayStates.indexOf(newDefault);
-        if (newIndex === -1) newIndex = 0;
-        
-        setCurrentDisplay([...state.allDisplayStates], newIndex);
-    }
 }
 
 // --- User Interactions ---
