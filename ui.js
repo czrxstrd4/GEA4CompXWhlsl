@@ -48,7 +48,6 @@ export function renderDashboard() {
             const headerCol = document.createElement('div');
             headerCol.className = 'col-lg-3 col-md-6 col-12 year-header-col';
             
-            // Note: Header totals show combined totals for the entire column (High + Low)
             const allItemsInHeader = filteredProjects.filter(p => p.targetYear === year); 
             const columnTotal = allItemsInHeader.reduce((sum, p) => sum + p.capacity, 0);
 
@@ -75,7 +74,6 @@ export function renderDashboard() {
             yearHeaderRow.appendChild(headerCol);
         });
 
-        // Only show year headers for the first bucket group
         if (bucket === state.buckets[0]) {
             bucketGroupEl.appendChild(yearHeaderRow);
         }
@@ -159,13 +157,21 @@ function processAndColorProjects(projectsToProcess) {
         let runningTotal = 0;
         const maxCapacity = requirement.Capacity;
 
-        // Create ordered lists, processing High before Low
-        const highLikelihood = group.filter(p => p.likelihood === 'High').sort((a,b) => a.tariff - b.tariff);
+        const highLikelihood = group.filter(p => p.likelihood === 'High');
         const lowLikelihood = group.filter(p => p.likelihood === 'Low').sort((a,b) => a.tariff - b.tariff);
+
+        // --- MODIFIED SORTING LOGIC ---
+        // If any 'High' project in this group was moved, sort the whole group by manual order.
+        // Otherwise, sort by the default (tariff).
+        const anyHighMovedInGroup = highLikelihood.some(p => p.isMoved);
+        if (anyHighMovedInGroup) {
+            highLikelihood.sort((a, b) => a.order - b.order);
+        } else {
+            highLikelihood.sort((a, b) => a.tariff - b.tariff);
+        }
         
         const finalGroupOrder = [...highLikelihood, ...lowLikelihood];
         
-        // Process allocation against the single capacity requirement
         for (const project of finalGroupOrder) {
             const remainingCapacity = maxCapacity - runningTotal;
 
@@ -489,6 +495,7 @@ export function updateProjectCapacity(projectId, newCapacity) {
     }
 }
 
+// --- MODIFIED DRAG-AND-DROP LOGIC ---
 function initializeDragAndDrop() {
     let dragStartColumn = null;
     interact('.year-column').dropzone({
@@ -504,7 +511,10 @@ function initializeDragAndDrop() {
             const dropzoneElement = event.target;
             dropzoneElement.classList.add('drop-target');
             setCurrentDropzone(dropzoneElement);
-            dropzoneElement.appendChild(state.placeholder);
+            // Only show placeholder for reordering in the 'High' likelihood group
+            if (dropzoneElement.dataset.likelihood === 'High') {
+                dropzoneElement.appendChild(state.placeholder);
+            }
         },
         ondragleave: (event) => {
             event.target.classList.remove('drop-target');
@@ -521,20 +531,28 @@ function initializeDragAndDrop() {
             const newYear = dropZone.dataset.year;
             const newLikelihood = dropZone.dataset.likelihood;
 
-            project.targetYear = newYear;
-            project.likelihood = newLikelihood;
-            project.isMoved = true;
-            
-            if (dropZone === dragStartColumn) {
+            const isReorder = newLikelihood === 'High' && dropZone === dragStartColumn;
+
+            if (isReorder) {
+                // Handle manual reordering
                 state.placeholder.insertAdjacentElement('afterend', draggedCard);
                 state.placeholder.remove();
+                
                 const cardsInColumn = Array.from(dropZone.querySelectorAll('.project-card'));
-                const baseOrder = new Date().getTime(); 
+                const baseOrder = new Date().getTime();
                 cardsInColumn.forEach((card, index) => {
                     const pId = parseInt(card.dataset.id, 10);
                     const projToUpdate = state.projects.find(p => p.id === pId);
-                    if (projToUpdate) projToUpdate.order = baseOrder + index;
+                    if (projToUpdate) {
+                        projToUpdate.order = baseOrder + index;
+                        projToUpdate.isMoved = true;
+                    }
                 });
+            } else {
+                // Handle moving between years or likelihood groups
+                project.targetYear = newYear;
+                project.likelihood = newLikelihood;
+                project.isMoved = true;
             }
             renderDashboard();
         },
@@ -557,7 +575,8 @@ function initializeDragAndDrop() {
                 dragStartColumn = event.target.closest('.year-column');
             },
             move(event) {
-                if (state.currentDropzone) {
+                // Only reposition placeholder in 'High' likelihood columns
+                if (state.currentDropzone && state.currentDropzone.dataset.likelihood === 'High') {
                     const cards = [...state.currentDropzone.querySelectorAll('.project-card:not(.is-dragging)')];
                     let insertBefore = null;
                     for (const card of cards) {
