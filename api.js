@@ -21,10 +21,9 @@ export async function fetchProjects() {
             lookerLink: String(row["Looker Link"] || "").trim(),
             order: index,
             isMoved: false,
-            allocationStatus: 'spillover', // This property is not used for bidders, but kept for data structure consistency
-            bidderStatus: 'spillover' // Using a bidder-specific status
+            bidderStatus: 'spillover'
         }))
-        .filter(p => p.likelihood === 'GEA-4 Bidders'); // Only load bidders
+        .filter(p => p.likelihood === 'High' || p.likelihood === 'Low'); // Only load 'High' and 'Low'
 }
 
 export async function fetchCapacityRequirements() {

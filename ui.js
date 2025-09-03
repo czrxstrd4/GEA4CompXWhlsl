@@ -24,94 +24,108 @@ export function renderDashboard() {
     const container = document.getElementById("dashboardGrid");
     container.innerHTML = "";
     
-    const bucket = 'GEA-4 Bidders';
-    const projectsForThisBucket = filteredProjects;
+    state.buckets.forEach(bucket => {
+        const projectsForThisBucket = filteredProjects.filter(p => p.likelihood === bucket);
 
-    const bucketGroupEl = document.createElement('div');
-    bucketGroupEl.className = 'mb-4 bucket-group';
-    
-    const likelihoodHeader = document.createElement('h3');
-    likelihoodHeader.className = 'fw-bold sticky-likelihood-header d-flex justify-content-between align-items-center';
-    likelihoodHeader.innerHTML = `<span>GEA-4 Bidders</span>`;
-    bucketGroupEl.appendChild(likelihoodHeader);
+        let headerText = '';
+        if (bucket === 'High') {
+            headerText = 'Potential GEA-4 Bidders';
+        } else if (bucket === 'Low') {
+            headerText = 'Potential GEA-4 Non-bidders';
+        }
 
-    const yearHeaderRow = document.createElement('div');
-    yearHeaderRow.className = 'row g-3 sticky-year-header-row';
-    state.years.forEach(year => {
-        const headerCol = document.createElement('div');
-        headerCol.className = 'col-lg-3 col-md-6 col-12 year-header-col';
-        const itemsInHeader = projectsForThisBucket.filter(p => p.targetYear === year);
-        const columnTotal = itemsInHeader.reduce((sum, p) => sum + p.capacity, 0);
-
-        const requirementTotal = state.capacityRequirements.filter(r => {
-            const yearMatch = String(r.Year) === year;
-            const gridMatch = (gridFilter === '') || (r.Grid === gridFilter);
-            const subtypeMatch = !selectedSubtype || selectedSubtype === r.Subtype;
-            return yearMatch && gridMatch && subtypeMatch;
-        }).reduce((sum, r) => sum + r.Capacity, 0);
+        const bucketGroupEl = document.createElement('div');
+        bucketGroupEl.className = 'mb-4 bucket-group';
         
-        const remainingCapacity = requirementTotal - columnTotal;
-        const remainingColor = remainingCapacity < 0 ? 'text-danger' : 'text-success';
+        const likelihoodHeader = document.createElement('h3');
+        likelihoodHeader.className = 'fw-bold sticky-likelihood-header d-flex justify-content-between align-items-center';
+        likelihoodHeader.innerHTML = `<span>${headerText}</span>`;
+        bucketGroupEl.appendChild(likelihoodHeader);
 
-        headerCol.innerHTML = `
-            <div class="text-center">
-                <h5 class="mb-2">${year}</h5>
-                <div class="small">
-                    <span class="text-muted">Req: <strong>${Math.round(requirementTotal)} MW</strong></span> |
-                    <span class="text-primary">Total: <strong>${Math.round(columnTotal)} MW</strong></span> |
-                    <span class="${remainingColor}">Rem: <strong>${Math.round(remainingCapacity)} MW</strong></span>
-                </div>
-            </div>
-        `;
-        yearHeaderRow.appendChild(headerCol);
-    });
-    bucketGroupEl.appendChild(yearHeaderRow);
-
-    const yearContentRow = document.createElement('div');
-    yearContentRow.className = 'row g-3 mt-0';
-    state.years.forEach(year => {
-        const contentCol = document.createElement("div");
-        contentCol.className = "col-lg-3 col-md-6 col-12 year-column";
-        contentCol.dataset.year = year;
-        contentCol.dataset.likelihood = bucket;
-
-        const items = projectsForThisBucket.filter(p => p.targetYear === year).sort((a, b) => a.order - b.order);
-
-        items.forEach(p => {
-            const displayValue = p.compRanking;
-
-            let statusClass = '';
-            if (p.bidderStatus === 'accepted') statusClass = 'status-bidder';
-            else if (p.bidderStatus === 'marginal') statusClass = 'status-marginal';
-            else statusClass = 'status-bidder-spillover';
+        const yearHeaderRow = document.createElement('div');
+        yearHeaderRow.className = 'row g-3 sticky-year-header-row';
+        state.years.forEach(year => {
+            const headerCol = document.createElement('div');
+            headerCol.className = 'col-lg-3 col-md-6 col-12 year-header-col';
             
-            const div = document.createElement("div");
-            div.className = `card project-card mb-2 ${p.isMoved ? 'is-moved' : ''} ${statusClass}`;
-            div.dataset.id = p.id;
-            div.innerHTML = `
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div style="min-width: 0;" class="me-auto">
-                        <strong class="d-block text-truncate" title="${p.name}">${p.name}</strong>
-                        <small class="text-muted text-truncate d-block" title="${p.parentCompany}">${p.parentCompany}</small>
-                    </div>
-                    <div class="text-end flex-shrink-0 ms-2">
-                        <div class="fw-bold">${Math.ceil(p.capacity)} MW${p.subtype === 'Hybrid' && p.bessCap ? ` (${p.bessCap})` : ''}</div>
-                        <div class="text-muted small">${displayValue}</div>
-                    </div>
-                    <div class="dropdown flex-shrink-0 ms-2">
-                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></button>
-                        <ul class="dropdown-menu dropdown-menu-end"></ul>
+            // Note: Header totals show combined totals for the entire column (High + Low)
+            const allItemsInHeader = filteredProjects.filter(p => p.targetYear === year); 
+            const columnTotal = allItemsInHeader.reduce((sum, p) => sum + p.capacity, 0);
+
+            const requirementTotal = state.capacityRequirements.filter(r => {
+                const yearMatch = String(r.Year) === year;
+                const gridMatch = (gridFilter === '') || (r.Grid === gridFilter);
+                const subtypeMatch = !selectedSubtype || selectedSubtype === r.Subtype;
+                return yearMatch && gridMatch && subtypeMatch;
+            }).reduce((sum, r) => sum + r.Capacity, 0);
+            
+            const remainingCapacity = requirementTotal - columnTotal;
+            const remainingColor = remainingCapacity < 0 ? 'text-danger' : 'text-success';
+
+            headerCol.innerHTML = `
+                <div class="text-center">
+                    <h5 class="mb-2">${year}</h5>
+                    <div class="small">
+                        <span class="text-muted">Req: <strong>${Math.round(requirementTotal)} MW</strong></span> |
+                        <span class="text-primary">Total: <strong>${Math.round(columnTotal)} MW</strong></span> |
+                        <span class="${remainingColor}">Rem: <strong>${Math.round(remainingCapacity)} MW</strong></span>
                     </div>
                 </div>
-              </div>`;
-            contentCol.appendChild(div);
+            `;
+            yearHeaderRow.appendChild(headerCol);
         });
-        yearContentRow.appendChild(contentCol);
+
+        // Only show year headers for the first bucket group
+        if (bucket === state.buckets[0]) {
+            bucketGroupEl.appendChild(yearHeaderRow);
+        }
+
+        const yearContentRow = document.createElement('div');
+        yearContentRow.className = 'row g-3 mt-0';
+        state.years.forEach(year => {
+            const contentCol = document.createElement("div");
+            contentCol.className = "col-lg-3 col-md-6 col-12 year-column";
+            contentCol.dataset.year = year;
+            contentCol.dataset.likelihood = bucket;
+
+            const items = projectsForThisBucket.filter(p => p.targetYear === year).sort((a, b) => a.order - b.order);
+
+            items.forEach(p => {
+                const displayValue = p.compRanking;
+
+                let statusClass = '';
+                if (p.bidderStatus === 'accepted') statusClass = 'status-bidder';
+                else if (p.bidderStatus === 'marginal') statusClass = 'status-marginal';
+                else statusClass = 'status-bidder-spillover';
+                
+                const div = document.createElement("div");
+                div.className = `card project-card mb-2 ${p.isMoved ? 'is-moved' : ''} ${statusClass}`;
+                div.dataset.id = p.id;
+                div.innerHTML = `
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div style="min-width: 0;" class="me-auto">
+                            <strong class="d-block text-truncate" title="${p.name}">${p.name}</strong>
+                            <small class="text-muted text-truncate d-block" title="${p.parentCompany}">${p.parentCompany}</small>
+                        </div>
+                        <div class="text-end flex-shrink-0 ms-2">
+                            <div class="fw-bold">${Math.ceil(p.capacity)} MW${p.subtype === 'Hybrid' && p.bessCap ? ` (${p.bessCap})` : ''}</div>
+                            <div class="text-muted small">${displayValue}</div>
+                        </div>
+                        <div class="dropdown flex-shrink-0 ms-2">
+                            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></button>
+                            <ul class="dropdown-menu dropdown-menu-end"></ul>
+                        </div>
+                    </div>
+                  </div>`;
+                contentCol.appendChild(div);
+            });
+            yearContentRow.appendChild(contentCol);
+        });
+        bucketGroupEl.appendChild(yearContentRow);
+        
+        container.appendChild(bucketGroupEl);
     });
-    bucketGroupEl.appendChild(yearContentRow);
-    
-    container.appendChild(bucketGroupEl);
 
     renderLegend();
     renderSummaryTotals(filteredProjects);
@@ -145,13 +159,14 @@ function processAndColorProjects(projectsToProcess) {
         let runningTotal = 0;
         const maxCapacity = requirement.Capacity;
 
-        if (group.some(p => p.isMoved)) {
-            group.sort((a, b) => a.order - b.order);
-        } else {
-            group.sort((a, b) => a.tariff - b.tariff);
-        }
+        // Create ordered lists, processing High before Low
+        const highLikelihood = group.filter(p => p.likelihood === 'High').sort((a,b) => a.tariff - b.tariff);
+        const lowLikelihood = group.filter(p => p.likelihood === 'Low').sort((a,b) => a.tariff - b.tariff);
         
-        for (const project of group) {
+        const finalGroupOrder = [...highLikelihood, ...lowLikelihood];
+        
+        // Process allocation against the single capacity requirement
+        for (const project of finalGroupOrder) {
             const remainingCapacity = maxCapacity - runningTotal;
 
             if (runningTotal >= maxCapacity) {
@@ -165,7 +180,7 @@ function processAndColorProjects(projectsToProcess) {
             }
         }
 
-        group.forEach(p => {
+        finalGroupOrder.forEach(p => {
             const globalProject = state.projects.find(gp => gp.id === p.id);
             if(globalProject) globalProject.order = globalOrderCounter++;
         });
@@ -200,9 +215,7 @@ function renderSummaryTotals(filteredProjects) {
 
         const projectsInYear = filteredProjects.filter(p => p.targetYear === year);
         const numProjects = projectsInYear.length;
-
         const yearGrandTotal = projectsInYear.reduce((sum, p) => sum + p.capacity, 0);
-
         const remainingCapacity = requirementTotal - yearGrandTotal;
         const remainingColor = remainingCapacity < 0 ? 'text-danger' : 'text-success';
         
@@ -221,13 +234,25 @@ function renderSummaryTotals(filteredProjects) {
             </div>
         `;
         
-        boxHtml += `
-            <div class="row small border-top pt-2">
-                <div class="col">Bidder Total</div>
-                <div class="col text-end"><strong>${Math.round(yearGrandTotal)} MW</strong></div>
-            </div>
-        `;
+        let totalsHtml = '';
+        state.masterBuckets.forEach(bucket => {
+            const bucketTotal = projectsInYear
+                .filter(p => p.likelihood === bucket)
+                .reduce((sum, p) => sum + p.capacity, 0);
 
+            let label = '';
+            if (bucket === 'High') label = 'Potential Bidders';
+            if (bucket === 'Low') label = 'Potential Non-bidders';
+
+            totalsHtml += `
+                <div class="row small">
+                    <div class="col">${label}</div>
+                    <div class="col text-end"><strong>${Math.round(bucketTotal)} MW</strong></div>
+                </div>
+            `;
+        });
+
+        boxHtml += `<div class="border-top pt-2">${totalsHtml}</div>`;
         boxHtml += `
             <div class="row small fw-bold border-top mt-2 pt-2">
                 <div class="col">Grand Total</div>
@@ -269,6 +294,7 @@ function renderLegend() {
 }
 
 export function populateFilters() {
+    // This function remains the same
     const gridSet = new Set(state.projects.map(p => p.grid).filter(Boolean));
     const subtypeSet = new Set(state.projects.map(p => p.subtype).filter(Boolean));
     const companySet = new Set(state.projects.map(p => p.parentCompany).filter(Boolean));
@@ -435,6 +461,14 @@ export function handleHighlightToggle() {
     applyHighlightStyles();
 }
 
+function moveProjectLikelihood(projectId, newLikelihood) {
+    const projectToMove = state.projects.find(p => p.id === projectId);
+    if (!projectToMove || projectToMove.likelihood === newLikelihood) return;
+    projectToMove.likelihood = newLikelihood;
+    projectToMove.isMoved = true;
+    renderDashboard();
+}
+
 function openModifyCapacityModal(projectId) {
     const project = state.projects.find(p => p.id === projectId);
     if (!project) return;
@@ -484,8 +518,14 @@ function initializeDragAndDrop() {
             const project = state.projects.find(p => p.id === projectId);
             if (!project) return;
 
-            const isReorder = dropZone === dragStartColumn;
-            if (isReorder) {
+            const newYear = dropZone.dataset.year;
+            const newLikelihood = dropZone.dataset.likelihood;
+
+            project.targetYear = newYear;
+            project.likelihood = newLikelihood;
+            project.isMoved = true;
+            
+            if (dropZone === dragStartColumn) {
                 state.placeholder.insertAdjacentElement('afterend', draggedCard);
                 state.placeholder.remove();
                 const cardsInColumn = Array.from(dropZone.querySelectorAll('.project-card'));
@@ -493,14 +533,8 @@ function initializeDragAndDrop() {
                 cardsInColumn.forEach((card, index) => {
                     const pId = parseInt(card.dataset.id, 10);
                     const projToUpdate = state.projects.find(p => p.id === pId);
-                    if (projToUpdate) {
-                        projToUpdate.order = baseOrder + index;
-                        projToUpdate.isMoved = true;
-                    }
+                    if (projToUpdate) projToUpdate.order = baseOrder + index;
                 });
-            } else {
-                project.targetYear = dropZone.dataset.year;
-                project.isMoved = true;
             }
             renderDashboard();
         },
@@ -548,9 +582,8 @@ function initializeCardDropdowns() {
     const grid = document.getElementById('dashboardGrid');
     grid.addEventListener('show.bs.dropdown', event => {
         const card = event.relatedTarget.closest('.project-card');
-        if (card) {
-            card.classList.add('menu-is-open');
-        }
+        if (card) card.classList.add('menu-is-open');
+        
         const toggleButton = event.relatedTarget;
         const projectId = parseInt(card.dataset.id, 10);
         const project = state.projects.find(p => p.id === projectId);
@@ -562,13 +595,25 @@ function initializeCardDropdowns() {
         const capacityLi = document.createElement('li');
         capacityLi.innerHTML = `<a class="dropdown-item" href="#" data-action="modify-capacity">Modify Capacity</a>`;
         menu.appendChild(capacityLi);
+
+        const divider = document.createElement('li');
+        divider.innerHTML = `<hr class="dropdown-divider">`;
+        menu.appendChild(divider);
+
+        if (project.likelihood === 'High') {
+            const moveLi = document.createElement('li');
+            moveLi.innerHTML = `<a class="dropdown-item" href="#" data-action="move-likelihood" data-new-likelihood="Low">Move to Non-bidders</a>`;
+            menu.appendChild(moveLi);
+        } else if (project.likelihood === 'Low') {
+            const moveLi = document.createElement('li');
+            moveLi.innerHTML = `<a class="dropdown-item" href="#" data-action="move-likelihood" data-new-likelihood="High">Move to Bidders</a>`;
+            menu.appendChild(moveLi);
+        }
     });
     
     grid.addEventListener('hide.bs.dropdown', event => {
         const card = event.relatedTarget.closest('.project-card');
-        if (card) {
-            card.classList.remove('menu-is-open');
-        }
+        if (card) card.classList.remove('menu-is-open');
     });
     
     grid.addEventListener('click', event => {
@@ -579,8 +624,13 @@ function initializeCardDropdowns() {
         const projectId = parseInt(card.dataset.id, 10);
         const action = target.dataset.action;
         
-        if (action === 'modify-capacity') {
-            openModifyCapacityModal(projectId);
+        switch(action) {
+            case 'modify-capacity':
+                openModifyCapacityModal(projectId);
+                break;
+            case 'move-likelihood':
+                moveProjectLikelihood(projectId, target.dataset.newLikelihood);
+                break;
         }
     });
 }

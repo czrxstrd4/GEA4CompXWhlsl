@@ -3,7 +3,7 @@ export let state = {
     capacityRequirements: [],
     years: [],
     buckets: [],
-    masterBuckets: ['GEA-4 Bidders'],
+    masterBuckets: ['High', 'Low'], // Updated for the two new groups
     placeholder: null,
     currentDropzone: null,
     isAboitizHighlighted: false,
