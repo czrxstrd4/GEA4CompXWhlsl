@@ -1,0 +1,253 @@
+/* Add this new rule to your style.css file */
+.project-card.status-bidder .card-body {
+    background-color: #e0f7ff; /* A light blue color */
+}
+
+.project-card.status-bidder-spillover .card-body {
+    background-color: #f1f3f5; /* Light grey for spillover bidders */
+}
+
+/* --- The rest of the file remains the same --- */
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap');
+body {
+    font-family: 'Figtree', sans-serif;
+    background-color: #f8f9fa;
+}
+body.dragging-active {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 1022;
+    background-color: #f8f9fa;
+    padding-bottom: 2.5rem;
+    padding-top: 1.5rem;
+}
+.bucket-group {
+    background-color: #f8f9fa;
+}
+.sticky-likelihood-header {
+    position: sticky;
+    top: 121px; 
+    background-color: #f8f9fa;
+    z-index: 1021;
+    padding: 0.5rem 0;
+    padding-bottom: 1rem;
+}
+.sticky-year-header-row {
+    position: sticky;
+    top: 175px; 
+    z-index: 1020;
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+}
+.year-header-col {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: 0.5rem;
+}
+.year-column {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: 1rem;
+    min-height: 250px;
+}
+.project-card {
+    cursor: move;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.3s ease, border-width 0.3s ease, background-color 0.3s ease;
+    border: 2px solid #6c757d;
+    border-radius: 0.5rem;
+    position: relative;
+    z-index: 1;
+    background-clip: padding-box;
+}
+.project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    border-color: #0d6efd;
+    z-index: 2;
+}
+
+.project-card.menu-is-open {
+    z-index: 1030;
+}
+
+.project-card.highlight-aboitiz {
+    border-color: #00aeef;
+    border-width: 3px;
+}
+.project-card.is-moved {
+     border-style: dashed;
+     border-color: #fd7e14;
+}
+.project-card.status-accepted .card-body {
+    background-color: #e8fdf3;
+}
+.project-card.status-marginal .card-body {
+     background-color: #fff8e0;
+}
+.project-card .card-body {
+     border-radius: calc(0.5rem - 4px);
+     font-size: 0.8rem;
+     padding: 0.25rem 0.5rem;
+}
+.project-card.is-dragging {
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.25)!important;
+    z-index: 1000;
+}
+.card-placeholder {
+    background-color: #cfe2ff;
+    border: 2px dashed #0d6efd;
+    border-radius: .375rem;
+    margin-bottom: .5rem;
+    height: 70px;
+}
+.drop-active {
+    border-color: #0d6efd !important;
+    background-color: #f8f9fa;
+}
+.drop-target {
+    background-color: #e9ecef;
+}
+.custom-select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.custom-multiselect {
+    position: relative;
+    width: 200px;
+}
+#gridFilter { width: 150px; }
+#subtypeFilter { width: 220px; }
+#companyFilter { width: 250px; }
+.multiselect-btn {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    padding: .375rem .75rem;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+}
+.multiselect-btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.multiselect-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    margin-top: .125rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1020;
+}
+.multiselect-menu.show {
+    display: block;
+}
+.multiselect-search-input {
+    width: 100%;
+    padding: .375rem .75rem;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    margin: 0;
+    display: block;
+}
+.multiselect-option {
+    padding: .5rem .75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.multiselect-option:hover {
+    background-color: #e9ecef;
+}
+.multiselect-option input {
+    margin-right: .5rem;
+}
+.multiselect-option.active {
+    font-weight: bold;
+    color: #0d6efd;
+}
+.dropdown-menu {
+    font-size: 0.875rem;
+}
+.summary-totals-table {
+    background-color: #fff;
+    border-radius: .375rem;
+    padding: 1rem;
+}
+.summary-totals-table .row {
+    border-bottom: 1px solid #e9ecef;
+    padding: .5rem 0;
+}
+ .summary-totals-table .row:last-child {
+    border-bottom: none;
+}
+.summary-totals-table .row.header-row {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+.modal-dialog.modal-custom-size {
+    max-width: 90vw;
+}
+.scenario-delete-btn {
+    cursor: pointer;
+    margin-left: auto;
+}
+
+#attribution {
+    position: fixed;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.7rem;
+    color: #6c757d;
+    z-index: 1025;
+    background-color: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 5px;
+}
+
+#attribution a {
+    color: #495057;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#attribution a:hover {
+    text-decoration: underline;
+}
+
+/* --- NEW LEGEND STYLES --- */
+.legend-color-box {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #ccc;
+    margin-right: 8px;
+    border-radius: 3px;
+}
+
+.is-moved-legend {
+    background-color: #fff;
+    border-style: dashed;
+    border-color: #fd7e14;
+    border-width: 2px;
+}

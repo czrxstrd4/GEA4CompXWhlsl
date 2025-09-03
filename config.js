@@ -1,0 +1,2 @@
+export const PROJECTS_URL = "https://script.google.com/macros/s/AKfycbzWYT1qI3q-rhWqEo2ALQ1F82QPAsm23P0DeiYE8Jo9LRTTbXpi52m8sY-j_vGcQ9Cxdw/exec";
+export const REQUIREMENTS_URL = "https://script.google.com/macros/s/AKfycbzIoSiFiO_CmHeasuIUQmydNDxE7TzXvmwq1kdaru5cMRaYpCUKbPUH_DDXxU2vQ9si/exec";
