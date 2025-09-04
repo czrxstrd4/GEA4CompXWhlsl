@@ -42,30 +42,41 @@ export function renderDashboard() {
         likelihoodHeader.innerHTML = `<span>${headerText}</span>`;
         bucketGroupEl.appendChild(likelihoodHeader);
 
+        // --- MODIFIED SECTION: Year headers are now generated for EACH group ---
         const yearHeaderRow = document.createElement('div');
         yearHeaderRow.className = 'row g-3 sticky-year-header-row';
         state.years.forEach(year => {
             const headerCol = document.createElement('div');
             headerCol.className = 'col-lg-3 col-md-6 col-12 year-header-col';
             
-            const allItemsInHeader = filteredProjects.filter(p => p.targetYear === year); 
-            const columnTotal = allItemsInHeader.reduce((sum, p) => sum + p.capacity, 0);
+            const itemsInHeader = projectsForThisBucket.filter(p => p.targetYear === year);
+            const columnTotal = itemsInHeader.reduce((sum, p) => sum + p.capacity, 0);
 
-            const requirementTotal = state.capacityRequirements.filter(r => {
+            const fullRequirementForYear = state.capacityRequirements.filter(r => {
                 const yearMatch = String(r.Year) === year;
                 const gridMatch = (gridFilter === '') || (r.Grid === gridFilter);
                 const subtypeMatch = !selectedSubtype || selectedSubtype === r.Subtype;
                 return yearMatch && gridMatch && subtypeMatch;
             }).reduce((sum, r) => sum + r.Capacity, 0);
             
-            const remainingCapacity = requirementTotal - columnTotal;
+            let requirementForThisGroup = 0;
+            if (bucket === 'High') {
+                requirementForThisGroup = fullRequirementForYear;
+            } else if (bucket === 'Low') {
+                const highProjectsTotal = filteredProjects
+                    .filter(p => p.targetYear === year && p.likelihood === 'High')
+                    .reduce((sum, p) => sum + p.capacity, 0);
+                requirementForThisGroup = Math.max(0, fullRequirementForYear - highProjectsTotal);
+            }
+
+            const remainingCapacity = requirementForThisGroup - columnTotal;
             const remainingColor = remainingCapacity < 0 ? 'text-danger' : 'text-success';
 
             headerCol.innerHTML = `
                 <div class="text-center">
                     <h5 class="mb-2">${year}</h5>
                     <div class="small">
-                        <span class="text-muted">Req: <strong>${Math.round(requirementTotal)} MW</strong></span> |
+                        <span class="text-muted">Req: <strong>${Math.round(requirementForThisGroup)} MW</strong></span> |
                         <span class="text-primary">Total: <strong>${Math.round(columnTotal)} MW</strong></span> |
                         <span class="${remainingColor}">Rem: <strong>${Math.round(remainingCapacity)} MW</strong></span>
                     </div>
@@ -73,10 +84,8 @@ export function renderDashboard() {
             `;
             yearHeaderRow.appendChild(headerCol);
         });
-
-        if (bucket === state.buckets[0]) {
-            bucketGroupEl.appendChild(yearHeaderRow);
-        }
+        bucketGroupEl.appendChild(yearHeaderRow);
+        // --- END MODIFIED SECTION ---
 
         const yearContentRow = document.createElement('div');
         yearContentRow.className = 'row g-3 mt-0';
@@ -160,9 +169,6 @@ function processAndColorProjects(projectsToProcess) {
         const highLikelihood = group.filter(p => p.likelihood === 'High');
         const lowLikelihood = group.filter(p => p.likelihood === 'Low').sort((a,b) => a.tariff - b.tariff);
 
-        // --- MODIFIED SORTING LOGIC ---
-        // If any 'High' project in this group was moved, sort the whole group by manual order.
-        // Otherwise, sort by the default (tariff).
         const anyHighMovedInGroup = highLikelihood.some(p => p.isMoved);
         if (anyHighMovedInGroup) {
             highLikelihood.sort((a, b) => a.order - b.order);
@@ -300,7 +306,6 @@ function renderLegend() {
 }
 
 export function populateFilters() {
-    // This function remains the same
     const gridSet = new Set(state.projects.map(p => p.grid).filter(Boolean));
     const subtypeSet = new Set(state.projects.map(p => p.subtype).filter(Boolean));
     const companySet = new Set(state.projects.map(p => p.parentCompany).filter(Boolean));
@@ -495,7 +500,6 @@ export function updateProjectCapacity(projectId, newCapacity) {
     }
 }
 
-// --- MODIFIED DRAG-AND-DROP LOGIC ---
 function initializeDragAndDrop() {
     let dragStartColumn = null;
     interact('.year-column').dropzone({
@@ -511,7 +515,6 @@ function initializeDragAndDrop() {
             const dropzoneElement = event.target;
             dropzoneElement.classList.add('drop-target');
             setCurrentDropzone(dropzoneElement);
-            // Only show placeholder for reordering in the 'High' likelihood group
             if (dropzoneElement.dataset.likelihood === 'High') {
                 dropzoneElement.appendChild(state.placeholder);
             }
@@ -534,7 +537,6 @@ function initializeDragAndDrop() {
             const isReorder = newLikelihood === 'High' && dropZone === dragStartColumn;
 
             if (isReorder) {
-                // Handle manual reordering
                 state.placeholder.insertAdjacentElement('afterend', draggedCard);
                 state.placeholder.remove();
                 
@@ -549,7 +551,6 @@ function initializeDragAndDrop() {
                     }
                 });
             } else {
-                // Handle moving between years or likelihood groups
                 project.targetYear = newYear;
                 project.likelihood = newLikelihood;
                 project.isMoved = true;
@@ -575,7 +576,6 @@ function initializeDragAndDrop() {
                 dragStartColumn = event.target.closest('.year-column');
             },
             move(event) {
-                // Only reposition placeholder in 'High' likelihood columns
                 if (state.currentDropzone && state.currentDropzone.dataset.likelihood === 'High') {
                     const cards = [...state.currentDropzone.querySelectorAll('.project-card:not(.is-dragging)')];
                     let insertBefore = null;
